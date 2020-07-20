@@ -1,0 +1,17 @@
+database:
+  host: 'xxxx'
+  port: 3306
+  db: 'nova'
+  username: 'xxxxxx'
+  password: 'xxxxxxxxx'
+nectar:
+  auth_url: 'https://keystone.rc.nectar.org.au:5000/v3/'
+  password: 'xxxxxxx'
+  project_name: 'xxxxx'
+  username: 'xxxxxxxxx'
+gpudb:
+  host: 'xxxxxxxx'
+  port: 3306
+  db: 'gpu'
+  username: 'xxxxxxx'
+  password: 'xxxxxxxxxxxxxxxxxxx'
