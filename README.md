@@ -16,3 +16,7 @@ gpu db is also queried to generate the gpu web calendar.
 
 This code is derived from Jason He's CLI gpu.py https://github.com/UoA-eResearch/nectar_uoa_gpu.
 
+## Additional DB Tables in GPU DB
+Adds tables to the gpu database created by https://github.com/UoA-eResearch/gpulogger
+
+* sql_tables.sql
