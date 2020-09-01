@@ -12,10 +12,21 @@ import novaclient.client
 from prettytable import PrettyTable
 import re
 
+# GPU_mapping = {
+#     'label_10de_1023': 'k40',
+#     'label_10de_1b38': 'p40',
+#     'label_10de_1e02': 'titan',
+#     'label_10de_1021': 'k20xm',
+#     'label_10de_1024': 'k40c',
+#     'label_10de_1b80': '1080',
+#     'label_10de_1eb8': 't4',
+#     'label_10de_1db6': 'v100'
+# }
+
 GPU_mapping = {
   'label_10de_1023': 'K40m',
   'label_10de_1b38': 'P40',
-  'label_10de_1e02': 'TRTX',
+  'label_10de_1e02': '2080',
   'label_10de_1021': 'K20Xm',
   'label_10de_1024': 'K40c',
   'label_10de_1b80': '1080',
@@ -274,6 +285,16 @@ def update_gpu_db(osc_conn, db_conn, gpudb_conn):
 
   current_gpu_node_list = fetch_gpu_nodes(gpudb_conn)
 
+  #First we set tmp_active to 0 for all entries, 
+  #then for every host,device pair, we set it to 1
+  #At the end, we set active to tmp_active for all entries
+  cursor = gpudb_conn.cursor()
+  try:
+    cursor.execute('UPDATE gpu_nodes SET tmp_active = 0')
+    gpudb_conn.commit()
+  except pymysql.Error as e:
+    print "DB clear gpu_nodes.tmp_active: ", e
+
   # update project_end date and contact
   for d in devices:
     # get project allocation info
@@ -303,7 +324,7 @@ def update_gpu_db(osc_conn, db_conn, gpudb_conn):
     '''
 
     statement2 = '''
-    INSERT INTO gpu_nodes ( hypervisor, gpu_type, pci_id, active ) VALUES ( %s, %s, %s, %s )  ON DUPLICATE KEY UPDATE active = active
+    INSERT INTO gpu_nodes ( hypervisor, gpu_type, pci_id, tmp_active ) VALUES ( %s, %s, %s, %s )  ON DUPLICATE KEY UPDATE tmp_active = %s
     '''
 
     statement3 = '''
@@ -318,7 +339,7 @@ def update_gpu_db(osc_conn, db_conn, gpudb_conn):
 
     cursor = gpudb_conn.cursor()
     try:
-      cursor.execute(statement2, (d['host'], d['label'], d['dev_id'], '1') )
+      cursor.execute(statement2, (d['host'], d['label'], d['dev_id'], '1', '1') )
       gpudb_conn.commit()
     except pymysql.Error as e:
       print "DB Update gpu_nodes: ", e
@@ -346,20 +367,15 @@ def update_gpu_db(osc_conn, db_conn, gpudb_conn):
         print "DB Update gpu_booking: ", e
         gpudb_conn.rollback()
 
-  if current_gpu_node_list is not None:
-    for pd in current_gpu_node_list:
-      if current_gpu_node_list[pd]['present'] == False:
-        statement5 = 'UPDATE gpu_nodes SET active = 0 WHERE hypervisor = %s AND pci_id = %s'
-        cursor = gpudb_conn.cursor()
-        try:
-          cursor.execute(statement5, (current_gpu_node_list[pd]['keys']['hypervisor'], current_gpu_node_list[pd]['keys']['pci_id']) )
-          gpudb_conn.commit()
-        except pymysql.Error as e:
-          print "DB Update gpu_nodes: ", e
-
+  #At the end, we set active to tmp_active for all entries
+  cursor = gpudb_conn.cursor()
+  try:
+    cursor.execute('UPDATE gpu_nodes SET active = tmp_active')
+    gpudb_conn.commit()
+  except pymysql.Error as e:
+    print "DB set gpu_nodes.active: ", e
 
 def clean_up_ip2project_instance_dates(nova_conn, gpudb_conn):
-  
   gpu_fetch_statement = 'SELECT id, instance_uuid FROM ip2project WHERE final = 0'
   nova_fetch_statement = 'SELECT terminated_at FROM instances WHERE uuid = %s'
   gpu_update_statement = 'UPDATE ip2project SET instance_terminated_at = %s, final = 1 WHERE id = %s'

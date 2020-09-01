@@ -4,6 +4,7 @@ CREATE TABLE `gpu_nodes` (
   `gpu_type` char(16) NOT NULL,
   `pci_id` varchar(32) NOT NULL,
   `active` tinyint(1) DEFAULT NULL,
+  `tmp_active` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `hypervisor_pci_id` (`hypervisor`,`pci_id`),
   KEY `hypervisor` (`hypervisor`),
