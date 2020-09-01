@@ -2,9 +2,9 @@
 
 Collect data on UoA Nectar GPUs and update the local gpu database.
 
-Run from crontab each hour on ntr-ops
+Run from crontab each half hour on ntr-ops
 ```
-5 * * * * /home/ntradm/bin/cron_update_ip2project
+5,35 * * * * /home/ntradm/bin/cron_update_ip2project
 ```
 
 Configs currently in ~/etc
